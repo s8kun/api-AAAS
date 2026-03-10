@@ -12,11 +12,16 @@ COPY resources ./resources
 COPY routes ./routes
 COPY artisan ./
 
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
+RUN mkdir -p storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+    && composer install \
+        --no-dev \
+        --prefer-dist \
+        --optimize-autoloader \
+        --no-interaction
 
 FROM node:20-alpine AS frontend
 
@@ -58,9 +63,15 @@ COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 COPY deploy/render/start.sh /usr/local/bin/start-render
 
-RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache database \
+RUN mkdir -p storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+    database \
     && touch database/database.sqlite \
     && chown -R www-data:www-data storage bootstrap/cache database \
+    && chmod -R 775 storage bootstrap/cache database \
     && chmod +x /usr/local/bin/start-render
 
 EXPOSE 10000
